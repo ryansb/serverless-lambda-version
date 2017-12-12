@@ -23,12 +23,13 @@ class LambdaArn {
           .LambdaFunctionAssociations;
 
       _.forEach(associations, association => {
-        const arn = association.LambdaFunctionARN;
-        const versionRef = this.getArnAndVersion(compiledResources, arn);
-        if (arn && versionRef) {
+        const funcName = association.LambdaFunctionARN;
+        const logicalId = this.serverless.providers.aws.naming.getLambdaLogicalId(funcName);
+        const versionRef = this.getArnAndVersion(compiledResources, logicalId)
+        if (logicalId && versionRef) {
           this.serverless.cli.log(
             `serverless-lambda-version: injecting arn+version for ${JSON.stringify(
-              arn
+              logicalId
             )}`
           );
           association.LambdaFunctionARN = versionRef;
@@ -47,16 +48,7 @@ class LambdaArn {
       }
     });
     return key
-      ? {
-        'Fn::Join': [
-          '',
-          [
-            { 'Fn::GetAtt': [ funcNormName, 'Arn' ] },
-            ':',
-            { 'Fn::GetAtt': [ key, 'Version' ] }
-          ]
-        ]
-      }
+      ? {Ref: key}
       : undefined;
   }
 
